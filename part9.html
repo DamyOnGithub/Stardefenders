@@ -1,0 +1,434 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+    <title>Phaser - Making your first game, part 9</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+	<script type="text/javascript" src="js/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+
+
+<script type="text/javascript">
+
+//http://www.html5gamedevs.com/topic/22438-adjust-delay-of-gametimeeventsloop-depending-on-score/  --> Hogere spawnrate bij hogere score
+
+var game = new Phaser.Game(1350, 650, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+
+function preload() {
+
+    game.load.image('space1', 'assets/space1.jpg');
+    game.load.image('star', 'assets/star.png');
+	game.load.image('laser', 'assets/laser.png');
+    game.load.spritesheet('xwing', 'assets/xwing.gif', 0, 0);
+	game.load.image('ship', 'assets/ship.png');
+	game.load.image('ship2', 'assets/ship2.png');
+    game.load.audio('music', 'assets/Theme.mp3')
+	game.load.spritesheet('xwingship', 'assets/xwingspritesheet.png', 128, 128);
+
+
+
+}
+
+var player;
+var ships;
+var ships2;
+var cursors;
+var lasers;
+var laserTime = 0;
+var life = 3;
+var alive = true;
+var play = true;
+
+var stars;
+var score = 0;
+/*  VOor powerup bij aantal punten. Als score = scorelimit, dan spawn powerup  = ster in test
+var scoreLimit = 100;
+*/
+var scoreText;
+
+function create() {
+	//music
+	music = game.add.audio('music');
+	music.play();
+	musicButton = game.input.keyboard.addKey(Phaser.Keyboard.P);
+
+    //  We're going to be using physics, so enable the Arcade Physics system
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+	game.physics.arcade.setBounds(0, 300, 1300, 300);
+
+    //  A simple background for our game
+    game.add.sprite(0, 0, 'space1');
+
+	//ship enemy    !!!
+
+	ships = game.add.group();
+    ships.enableBody = true;
+	ships.physicsBodyType = Phaser.Physics.ARCADE;
+	ships.createMultiple(5, 'ship');
+    ships.setAll('anchor.x', 0.5);
+    ships.setAll('anchor.y', 0.5);
+    ships.setAll('scale.x', 0.5);
+    ships.setAll('scale.y', 0.5);
+    ships.setAll('angle', 0);
+    ships.setAll('outOfBoundsKill', true);
+    ships.setAll('checkWorldBounds', true);
+
+
+	//onderdstaande werkt niet   geen idee wat het zou doen ook    oww wacht dat is voor collision box kleiner te maken volgens mij
+	//ship.body.width = 46;    ship.body.height = 82;
+	//game.debug.renderPhysicsBody(ship.sprite.body);
+
+	/*
+	for (var i = 0; i < 50; i++)
+    {
+        var c = ships.create(game.world.randomX, Math.random() * 500, 'ships', game.rnd.integerInRange(0, 36));
+        c.name = 'veg' + i;
+        c.body.immovable = true;
+	*/
+
+	//Roept functie aan
+    launchship();
+
+	ships2 = game.add.group();
+    ships2.enableBody = true;
+	ships2.physicsBodyType = Phaser.Physics.ARCADE;
+	ships2.createMultiple(5, 'ship2');
+    ships2.setAll('anchor.x', 0.5);
+    ships2.setAll('anchor.y', 0.5);
+    ships2.setAll('scale.x', 0.5);
+    ships2.setAll('scale.y', 0.5);
+    ships2.setAll('angle', 0);
+    ships2.setAll('outOfBoundsKill', true);
+    ships2.setAll('checkWorldBounds', true);
+
+	launchship2();
+
+	//game.add.sprite(400,200, 'ship');
+	//enemy.enableBody = true;
+
+
+
+	// Shoot
+	lasersl = game.add.group();
+    lasersl.enableBody = true;
+    lasersl.physicsBodyType = Phaser.Physics.ARCADE;
+    lasersl.createMultiple(50, 'laser');
+    lasersl.setAll('anchor.x', -1);
+    lasersl.setAll('anchor.y', 0.1);
+    lasersl.setAll('outOfBoundsKill', true);
+    lasersl.setAll('checkWorldBounds', true);
+
+	lasersr = game.add.group();
+    lasersr.enableBody = true;
+    lasersr.physicsBodyType = Phaser.Physics.ARCADE;
+    lasersr.createMultiple(50, 'laser');
+    lasersr.setAll('anchor.x', -7.7);
+    lasersr.setAll('anchor.y', 0.1);
+    lasersr.setAll('outOfBoundsKill', true);
+    lasersr.setAll('checkWorldBounds', true);
+	fireButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+
+
+    // The player and its settings
+    player = game.add.sprite(game.world.width - 675, game.world.height - 150, 'xwingship');
+	player.animations.add('fly', [0, 1], 5, true);
+	player.animations.play('fly');
+	//player.scale.setTo(0.2, 0.2);
+	game.physics.arcade.enable(player);
+
+    //  Player physics properties. Give the little guy a slight bounce.
+    player.body.bounce.y = 0.2;
+    //player.body.gravity.y = 300;
+    player.body.collideWorldBounds = true;
+
+    //  Finally some stars to collect
+    stars = game.add.group();
+
+    //  We will enable physics for any star that is created in this group
+    stars.enableBody = true;
+
+
+    //  Here we'll create 12 of them evenly spaced apart
+    for (var i = 0; i < 12; i++)
+    {
+        //  Create a star inside of the 'stars' group
+        var star = stars.create(i * 70, 0, 'star');
+
+        //  Let gravity do its thing
+        star.body.gravity.y = 300;
+
+        //  This just gives each star a slightly random bounce value
+        star.body.bounce.y = 0.7 + Math.random() * 0.2;
+    }
+
+	launchStars();
+	stars.setAll('outOfBoundsKill', true);
+    //  The score
+    scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#FE2EF7' });
+	lifeText = game.add.text(400, 16, 'life: 3', { fontSize: '32px', fill: '#FE2EF7' });
+
+    //  Our controls.
+    cursors = game.input.keyboard.createCursorKeys();
+
+}
+
+function update() {
+
+    //  Collide the player and the stars with the platforms
+
+
+	game.physics.arcade.overlap(lasersr, ships, killship, null, this);
+	game.physics.arcade.overlap(lasersl, ships2, killship2, null, this);
+	game.physics.arcade.overlap(player, ships, PlayerDeathShips, null, this);
+	game.physics.arcade.overlap(player, ships2, PlayerDeathShips2, null, this);
+	playerDie();
+	//playMusic();
+
+
+    //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
+    game.physics.arcade.overlap(player, stars, collectStar, null, this);
+
+    //  Reset the players velocity (movement)
+
+    player.body.velocity.x = 0;
+    player.body.velocity.y = 0;
+
+    if (cursors.left.isDown)
+    {
+        player.body.velocity.x = -400;
+    }
+    else if (cursors.right.isDown)
+    {
+        player.body.velocity.x = 400;
+    }
+
+    if (cursors.up.isDown)
+    {
+        player.body.velocity.y = -400;
+    }
+    else if (cursors.down.isDown)
+    {
+        player.body.velocity.y = 400;
+    }
+	if (fireButton.isDown)
+        {
+            firelaser();
+        }
+	if (musicButton.isDown)
+		{
+			if (play == true) {
+				music.stop();
+				play = false;
+			}
+			else if (play == false) {
+				play = true;
+				music.play();
+			}
+
+		}
+
+}
+
+function PlayerDeathShips (player, ships) {
+
+    // Removes the star from the screen
+  life -= 1;
+	ships.kill();
+
+}
+
+function PlayerDeathShips2 (player,ships2) {
+	life -= 1;
+	ships2.kill();
+
+}
+function playerDie () {
+	lifeText.text = 'Life: ' + life;
+	if (life < 1) {
+		player.kill();
+		alive = false;
+	}
+}
+	// Kill the Tie Fighters
+function starkiller (lasersr, star) {
+
+    // Removes the star from the screen
+    star.kill();
+
+}
+function starkillel (lasersl, star) {
+
+    // Removes the star from the screen
+    star.kill();
+
+}
+function killship (lasers, ships) {
+
+    lasers.kill();
+    ships.kill();
+
+	score += 10;
+    scoreText.text = 'Score: ' + score;
+}
+
+function killship2 (lasers, ships2) {
+
+    lasers.kill();
+    ships2.kill();
+
+	score += 20;
+    scoreText.text = 'Score: ' + score;
+}
+
+	// Score limit    Triggers something  :P ??
+	var scoreLimit = scoreLimit + 100;
+
+
+	// !!! Tie Fighter enemies   !!!!
+
+function launchship() {
+    var MIN_ENEMY1_SPACING = 150;
+    var MAX_ENEMY1_SPACING = 600;
+    var ENEMY1_SPEED = 200;
+
+    var enemyship = ships.getFirstExists(false);
+    if (enemyship) {
+        enemyship.reset(game.rnd.integerInRange(50, game.width - 50), -10);
+        enemyship.body.velocity.x = game.rnd.integerInRange(-300, 300);
+        enemyship.body.velocity.y = ENEMY1_SPEED;
+        enemyship.body.drag.x = 100;
+    }
+
+    //  Send another enemy soon
+    game.time.events.add(game.rnd.integerInRange(MIN_ENEMY1_SPACING, MAX_ENEMY1_SPACING), launchship);
+}
+
+function launchship2() {
+    var MIN_ENEMY2_SPACING = 150;
+    var MAX_ENEMY2_SPACING = 600;
+    var ENEMY2_SPEED = 200;
+
+    var enemyship2 = ships2.getFirstExists(false);
+    if (enemyship2) {
+        enemyship2.reset(game.rnd.integerInRange(50, game.width - 50), -10);
+        enemyship2.body.velocity.x = game.rnd.integerInRange(-300, 300);
+        enemyship2.body.velocity.y = ENEMY2_SPEED;
+        enemyship2.body.drag.x = 100;
+    }
+
+    //  Send another enemy soon
+    game.time.events.add(game.rnd.integerInRange(MIN_ENEMY2_SPACING, MAX_ENEMY2_SPACING), launchship2);
+}
+
+//met launchStars wordt nog niets gedaan.  Bedoeling is om te proberen een ster te spawnen bij bepaalde score
+
+function launchStars() {
+    var MIN_STAR_SPACING = 150;
+    var MAX_STAR_SPACING = 600;
+    var STAR_SPEED = 50;
+
+    var star = stars.getFirstExists(false);
+    if (star) {
+        star.reset(game.rnd.integerInRange(50, game.width - 50), -10);
+        star.body.velocity.x = game.rnd.integerInRange(-300, 300);
+        star.body.velocity.y = STAR_SPEED;
+        star.body.drag.x = 100;
+    }
+
+    //  Send another star soon
+    game.time.events.add(game.rnd.integerInRange(MIN_STAR_SPACING, MAX_STAR_SPACING), launchStars);
+}
+
+function collectStar (player, star) {
+
+    // Removes the star from the screen
+    star.kill();
+
+    //  Add and update the score
+    score += 10;
+    scoreText.text = 'Score: ' + score;
+
+}
+
+function enemyFire () {
+
+	var time = 0
+
+	if (time % 3 == 0)
+	{
+		laser = lasers.getFirstExists(false);
+
+		if(laser)
+	{
+	laser.reset(enemy.x + 46, enemy.y + 100);
+            laser.body.velocity.y = 600;
+            laserTime = game.time.now + 200;
+}
+}
+
+}
+
+
+function firelaser () {
+
+    //  To avoid them being allowed to fire too fast we set a time limit
+		if (alive == true) {
+    	if (game.time.now > laserTime)
+    	{
+        //  Grab the first laser we can from the pool
+        laserl = lasersl.getFirstExists(false);
+				laserr = lasersr.getFirstExists(false);
+
+        if (laserl)
+        {
+            //  And fire it
+            laserl.reset(player.x, player.y + 8);
+            laserl.body.velocity.y = -800;
+            laserTime = game.time.now + 200;
+        }
+				if (laserr)
+        {
+            //  And fire it
+            laserr.reset(player.x, player.y + 8);
+            laserr.body.velocity.y = -800;
+            laserTime = game.time.now + 200;
+        }
+    }
+	}
+
+}
+
+function resetlaserl (laserl) {
+
+    //  Called if the laser goes out of the screen
+    laserl.kill();
+
+}
+function resetlaserr (laserr) {
+
+    //  Called if the laser goes out of the screen
+    laserr.kill();
+
+}
+
+//onderstaande werkt niet
+
+function render(){
+game.debug.bodyInfo(xwing, 32, 32);
+
+    game.debug.body(xwing);
+    game.debug.body(ship);
+	game.debug.body(ship2);
+}
+</script>
+
+</body>
+</html>

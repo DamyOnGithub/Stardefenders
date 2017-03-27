@@ -1,0 +1,88 @@
+// Score limit    Triggers something  :P ??
+//var scoreLimit = scoreLimit + 100;
+
+
+// !!! Tie Fighter enemies   !!!!
+
+/*launchship: function () {
+var MIN_ENEMY1_SPACING = 150;
+var MAX_ENEMY1_SPACING = 600;
+var ENEMY1_SPEED = 200;
+console.log(this.thisships);
+
+this.enemyship = this.ships.getFirstExists(false);
+if (this.enemyship) {
+    this.enemyship.reset(game.rnd.integerInRange(50, game.width - 50), -10);
+    this.enemyship.body.velocity.x = game.rnd.integerInRange(-300, 300);
+    this.enemyship.body.velocity.y = ENEMY1_SPEED;
+    this.enemyship.body.drag.x = 100;
+}
+
+//  Send another enemy soon
+game.time.events.add(game.rnd.integerInRange(MIN_ENEMY1_SPACING, MAX_ENEMY1_SPACING), this.launchship);
+},*/
+
+/*launchship2: function () {
+var MIN_ENEMY2_SPACING = 150;
+var MAX_ENEMY2_SPACING = 600;
+var ENEMY2_SPEED = 200;
+
+var enemyship2 = ships2.getFirstExists(false);
+if (enemyship2) {
+    enemyship2.reset(game.rnd.integerInRange(50, game.width - 50), -10);
+    enemyship2.body.velocity.x = game.rnd.integerInRange(-300, 300);
+    enemyship2.body.velocity.y = ENEMY2_SPEED;
+    enemyship2.body.drag.x = 100;
+}
+
+//  Send another enemy soon
+game.time.events.add(game.rnd.integerInRange(MIN_ENEMY2_SPACING, MAX_ENEMY2_SPACING), this.launchship2);
+},*/
+
+//met launchStars wordt nog niets gedaan.  Bedoeling is om te proberen een ster te spawnen bij bepaalde score
+
+/*launchStars: function () {
+var MIN_STAR_SPACING = 150;
+var MAX_STAR_SPACING = 600;
+var STAR_SPEED = 50;
+
+var star = stars.getFirstExists(false);
+if (star) {
+    star.reset(game.rnd.integerInRange(50, game.width - 50), -10);
+    star.body.velocity.x = game.rnd.integerInRange(-300, 300);
+    star.body.velocity.y = STAR_SPEED;
+    star.body.drag.x = 100;
+}
+
+//  Send another star soon
+game.time.events.add(game.rnd.integerInRange(MIN_STAR_SPACING, MAX_STAR_SPACING), launchStars);
+},
+
+collectStar: function  (player, star) {
+
+// Removes the star from the screen
+star.kill();
+
+//  Add and update the score
+score += 10;
+scoreText.text = 'Score: ' + score;
+
+},
+
+enemyFire: function  () {
+
+var time = 0
+
+if (time % 3 == 0)
+{
+    laser = lasers.getFirstExists(false);
+
+    if(laser)
+{
+laser.reset(enemy.x + 46, enemy.y + 100);
+        laser.body.velocity.y = 600;
+        laserTime = game.time.now + 200;
+}
+}
+
+},*/
