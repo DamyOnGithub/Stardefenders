@@ -10,7 +10,7 @@ var playState = {
         var lasers;
         this.laserTime = 0;
         //this.that = this;
-        var life = 3;
+        this.life = 3;
         var alive = true;
         var play = true;
         var thisships;
@@ -32,7 +32,7 @@ var playState = {
     	//game.add.sprite(400,200, 'ship');
     	//enemy.enableBody = true;
 
-
+//was  ist loss Leute?
 
     	// Shoot
 
@@ -71,18 +71,6 @@ var playState = {
 
         console.log(this.ships);
 
-        /*this.ships2 = game.add.group();
-        this.ships2.enableBody = true;
-    	game.physics.arcade.enable(this.ships2);
-    	this.ships2.createMultiple(5, 'ship2');
-        this.ships2.setAll('anchor.x', 0.5);
-        this.ships2.setAll('anchor.y', 0.5);
-        this.ships2.setAll('scale.x', 0.5);
-        this.ships2.setAll('scale.y', 0.5);
-        this.ships2.setAll('angle', 0);
-        this.ships2.setAll('outOfBoundsKill', true);
-        this.ships2.setAll('checkWorldBounds', true);*/
-
         game.physics.startSystem(Phaser.Physics.ARCADE);
     	game.physics.arcade.setBounds(0, 300, 1300, 300);
 
@@ -98,11 +86,23 @@ var playState = {
         this.ships.setAll('body.setSize.x', 30);
         this.ships.setAll('anchor.x', 0.5);
         this.ships.setAll('anchor.y', 0.5);
-        this.ships.setAll('scale.x', 0.5);
-        this.ships.setAll('scale.y', 0.5);
+        this.ships.setAll('scale.x', 1);
+        this.ships.setAll('scale.y', 1);
         this.ships.setAll('angle', 0);
         this.ships.setAll('outOfBoundsKill', true);
         this.ships.setAll('checkWorldBounds', true);
+			
+			this.ships2 = game.add.group();
+        this.ships2.enableBody = true;
+    	game.physics.arcade.enable(this.ships2);
+    	this.ships2.createMultiple(5, 'ship2');
+        this.ships2.setAll('anchor.x', 0.5);
+        this.ships2.setAll('anchor.y', 0.5);
+        this.ships2.setAll('scale.x', 0.5);
+        this.ships2.setAll('scale.y', 0.5);
+        this.ships2.setAll('angle', 0);
+        this.ships2.setAll('outOfBoundsKill', true);
+        this.ships2.setAll('checkWorldBounds', true);
 
 
         this.lasersl = game.add.group();
@@ -138,6 +138,7 @@ var playState = {
         this.cursors = game.input.keyboard.createCursorKeys();
 
         this.launchship();
+			this.launchship2();
 
         console.log(this.ships);
 
@@ -156,7 +157,7 @@ var playState = {
     	//game.physics.arcade.overlap(this.lasersl, this.ships2, this.killship2, null, this);
     	game.physics.arcade.overlap(this.player, this.ships, this.PlayerDeathShips, null, this);
     	//game.physics.arcade.overlap(this.player, this.ships2, this.PlayerDeathShips2, null, this);
-    	//this.playerDie();
+    	this.playerDie();
     	//playMusic();
 
 
@@ -323,6 +324,21 @@ var playState = {
 
 	game.debug.body(this.ships.alive);
 },
+	
+	launchship2: function () {
+        var min_enemy_spacing = 150;
+        var max_enemy_spacing = 600;
+        var enemy_speed = 200;
+        var enemies = this.ships2.getFirstExists(false);
+				console.log("hallo");
+        if (enemies) {
+            enemies.reset(game.rnd.integerInRange(50, game.width - 50), -10);
+            enemies.body.velocity.x = game.rnd.integerInRange(-300, 300);
+            enemies.body.velocity.y = enemy_speed;
+            enemies.body.drag.x = 100;
+        }
+        game.time.events.add(game.rnd.integerInRange(min_enemy_spacing, max_enemy_spacing), this.launchship2, this);
+    },
 
 renderGroup: function(member) {
         game.debug.body(member);
